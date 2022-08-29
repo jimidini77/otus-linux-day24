@@ -1,9 +1,9 @@
 ---
 - name: NGINX | Install and configure NGINX
-  hosts: nginx
+  hosts: web
   become: true
   vars:
-    nginx_listen_port: 8080
+    nginx_listen_port: 80
 
   tasks:
     - name: NGINX | Install EPEL Repo package from standart repo
@@ -24,14 +24,14 @@
         - nginx-package
         - packages
 
-    - name: NGINX | Create NGINX config file from temolate
-      template:
-        src: templates/nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
-      notify:
-        - reload nginx
-      tags:
-        - nginx-configuration
+#    - name: NGINX | Create NGINX config file from template
+#      template:
+#        src: templates/nginx.conf.j2
+#        dest: /etc/nginx/nginx.conf
+#      notify:
+#        - reload nginx
+#      tags:
+#        - nginx-configuration
 
   handlers:
     - name: restart nginx
@@ -44,3 +44,37 @@
       systemd:
         name: nginx
         state: reloaded
+
+- name: CHRONYD | Tuning
+  hosts: all
+  become: true
+  tasks:
+    - name: CHRONYD | copy config file
+      copy:
+        src: /usr/share/zoneinfo/Europe/Moscow
+        dest: /etc/localtime
+        remote_src: true
+      notify:
+        - restart chronyd
+
+  handlers:
+    - name: restart chronyd
+      systemd:
+        name: chronyd
+        state: restarted
+        enabled: yes
+
+- name: RSYSLOG | Configuration
+  hosts: log
+  become: true
+  tasks:
+    - name: RSYSLOG | Edit config
+      replace:
+        path: /etc/rsyslog.conf
+        regexp: "{{ item }}"
+        replace: '\1'
+      loop:
+        - '^\s*#*\s*(\$ModLoad imudp.*)'
+        - '^\s*#*\s*(\$UDPServerRun 514.*)'
+        - '^\s*#*\s*(\$ModLoad imtcp.*)'
+        - '^\s*#*\s*(\$InputTCPServerRun 514.*)'
