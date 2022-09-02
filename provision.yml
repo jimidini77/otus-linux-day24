@@ -1,5 +1,5 @@
 ---
-- name: NGINX | Install and configure NGINX
+- name: WEB | Install and configure software
   hosts: web
   become: true
   vars:
@@ -50,6 +50,29 @@
         - restart auditd
       tags:
         - auditd-conf
+
+    - name: AUDITD | Install audispd-plugins package
+      yum:
+        name: audispd-plugins
+        state: latest
+      tags:
+        - packages
+
+    - name: AUDITD | Edit config
+      lineinfile:
+        path: "{{ item.file }}"
+        regexp: "{{ item.search }}"
+        line: "{{ item.replace }}"
+      with_items: 
+        - { search: '^log_format = .*', replace: 'log_format = RAW', file: '/etc/audit/auditd.conf' }
+        - { search: '^name_format = .*', replace: 'name_format = HOSTNAME', file: '/etc/audit/auditd.conf' }
+        - { search: '^active = .*', replace: 'active = yes', file: '/etc/audisp/plugins.d/au-remote.conf' }
+        - { search: '^remote_server =.*', replace: 'remote_server = {{ log_vm_ip }}', file: '/etc/audisp/audisp-remote.conf' }
+      notify:
+        - restart auditd
+      tags:
+        - auditd-conf
+    
 
 #    - name: with_flattened -> loop
 #      ansible.builtin.debug:
