@@ -4,6 +4,16 @@
   become: true
   vars:
     nginx_listen_port: 80
+    web_vm_ip: 192.168.56.10
+    log_vm_ip: 192.168.56.15
+    nginx_conf:
+      error:
+        search: '\s*error_log.*'
+        after: 'error_log syslog:server={{ log_vm_ip }}:514,tag=nginx_error;'
+      access:
+        search: '\s*access_log.*'
+        after: 'access_log syslog:server={{ log_vm_ip }}:514,tag=nginx_access,severity=info combined;'
+      
 
   tasks:
     - name: NGINX | Install EPEL Repo package from standart repo
@@ -24,14 +34,26 @@
         - nginx-package
         - packages
 
-#    - name: NGINX | Create NGINX config file from template
-#      template:
-#        src: templates/nginx.conf.j2
-#        dest: /etc/nginx/nginx.conf
-#      notify:
-#        - reload nginx
-#      tags:
-#        - nginx-configuration
+    - name: NGINX | configure logging
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        insertafter: "{{ item.search }}"
+        line: "{{ item.after }}"
+      with_items: 
+        - { search: '\s*error_log.*', after: 'error_log syslog:server={{ log_vm_ip }}:514,tag=nginx_error;' }
+        - { search: '\s*access_log.*', after: 'access_log syslog:server={{ log_vm_ip }}:514,tag=nginx_access,severity=info combined;' }
+      notify:
+        - restart nginx
+      tags:
+        - nginx-package
+        - nginx-conf
+
+#    - name: with_flattened -> loop
+#      ansible.builtin.debug:
+#        msg: "{{ item.value }}" 
+#      loop: "{{ lookup('dict', nginx_conf) }}"
+#      tags: 
+#        - debug
 
   handlers:
     - name: restart nginx
@@ -56,6 +78,8 @@
         remote_src: true
       notify:
         - restart chronyd
+      tags:
+        - chronyd
 
   handlers:
     - name: restart chronyd
@@ -78,3 +102,26 @@
         - '^\s*#*\s*(\$UDPServerRun 514.*)'
         - '^\s*#*\s*(\$ModLoad imtcp.*)'
         - '^\s*#*\s*(\$InputTCPServerRun 514.*)'
+      notify:
+        - restart rsyslog
+      tags:
+        - rsyslog
+
+    - name: RSYSLOG | Append config
+      blockinfile:
+        path: /etc/rsyslog.conf
+        block: |
+          $template RemoteLogs,"/var/log/rsyslog/%HOSTNAME%/%PROGRAMNAME%.log"
+          *.* ?RemoteLogs
+          & ~
+      notify:
+        - restart rsyslog
+      tags:
+        - rsyslog
+
+  handlers:
+    - name: restart rsyslog
+      systemd:
+        name: rsyslog
+        state: restarted
+        enabled: yes
