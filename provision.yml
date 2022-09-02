@@ -74,13 +74,6 @@
         - auditd-conf
     
 
-#    - name: with_flattened -> loop
-#      ansible.builtin.debug:
-#        msg: "{{ item.value }}" 
-#      loop: "{{ lookup('dict', nginx_conf) }}"
-#      tags: 
-#        - debug
-
   handlers:
     - name: restart nginx
       systemd:
