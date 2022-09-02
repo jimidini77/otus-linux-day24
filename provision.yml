@@ -117,7 +117,7 @@
         state: restarted
         enabled: yes
 
-- name: RSYSLOG | Configuration
+- name: LOG | Configuration
   hosts: log
   become: true
   tasks:
@@ -148,9 +148,23 @@
       tags:
         - rsyslog
 
+    - name: AUDITD | Edit config
+      replace:
+        path: /etc/audit/auditd.conf
+        regexp: '^\s*#*\s*(tcp_listen_port.*)'
+        replace: '\1'
+      notify:
+        - restart auditd
+      tags:
+        - auditd-conf
+
+
   handlers:
     - name: restart rsyslog
       systemd:
         name: rsyslog
         state: restarted
         enabled: yes
+
+    - name: restart auditd
+      service: name=auditd state=restarted use=service
