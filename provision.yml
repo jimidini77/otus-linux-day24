@@ -6,14 +6,6 @@
     nginx_listen_port: 80
     web_vm_ip: 192.168.56.10
     log_vm_ip: 192.168.56.15
-    nginx_conf:
-      error:
-        search: '\s*error_log.*'
-        after: 'error_log syslog:server={{ log_vm_ip }}:514,tag=nginx_error;'
-      access:
-        search: '\s*access_log.*'
-        after: 'access_log syslog:server={{ log_vm_ip }}:514,tag=nginx_access,severity=info combined;'
-      
 
   tasks:
     - name: NGINX | Install EPEL Repo package from standart repo
@@ -48,6 +40,17 @@
         - nginx-package
         - nginx-conf
 
+    - name: NGINX | Audit config changes
+      blockinfile:
+        path: /etc/rsyslog.conf
+        block: |
+          -w /etc/nginx/nginx.conf -p wa -k nginx_conf
+          -w /etc/nginx/default.d/ -p wa -k nginx_conf
+      notify:
+        - restart auditd
+      tags:
+        - auditd-conf
+
 #    - name: with_flattened -> loop
 #      ansible.builtin.debug:
 #        msg: "{{ item.value }}" 
@@ -66,6 +69,9 @@
       systemd:
         name: nginx
         state: reloaded
+
+    - name: restart auditd
+      service: name=auditd state=restarted use=service
 
 - name: CHRONYD | Tuning
   hosts: all
