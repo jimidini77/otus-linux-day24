@@ -1,33 +1,26 @@
-# -*- mode: ruby -*-
-# vim: set ft=ruby :
-
-MACHINES = {
-  :zabbix => {
-        :box_name => "centos/8",
-        :box_version => "2011.0",
-        :ip_addr => '192.168.11.101',
-  },
-}
-
 Vagrant.configure("2") do |config|
-config.vm.synced_folder ".", "/vagrant", disabled: true
-  MACHINES.each do |boxname, boxconfig|
-
-      config.vm.define boxname do |box|
-
-          box.vm.box = boxconfig[:box_name]
-          box.vm.host_name = boxname.to_s
-
-          box.vm.host_name = "zabbix"
-
-          box.vm.network "private_network", ip: boxconfig[:ip_addr]
-
-          box.vm.provider :virtualbox do |vb|
-            	  vb.customize ["modifyvm", :id, "--memory", "2048"]
-		  end
- 	  box.vm.provision "shell", inline: <<-SHELL
-          SHELL
-      end
+  # Base VM OS configuration.
+  config.vm.box = "centos/7"
+  config.vm.box_version = "2004.01"
+  config.vm.provider :virtualbox do |v|
+    v.memory = 512
+    v.cpus = 1
+  end
+  # Define two VMs with static private IP addresses.
+  boxes = [
+    { :name => "web",
+      :ip => "192.168.56.10",
+    },
+    { :name => "log",
+      :ip => "192.168.56.15",
+    }
+  ]
+  #Provision each of the VMs.
+  boxes.each do |opts|
+    config.vm.define opts[:name] do |config|
+      config.vm.hostname = opts[:name]
+      config.vm.network "private_network", ip: opts[:ip]
+    end
   end
 end
 
