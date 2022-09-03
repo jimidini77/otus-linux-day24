@@ -87,7 +87,8 @@
         state: reloaded
 
     - name: restart auditd
-      service: name=auditd state=restarted use=service
+      command: /sbin/service auditd restart
+#      service: name=auditd state=restarted use=service
 
 - name: CHRONYD | Tuning
   hosts: all
@@ -160,4 +161,5 @@
         enabled: yes
 
     - name: restart auditd
-      service: name=auditd state=restarted use=service
+      command: /sbin/service auditd restart
+#      service: name=auditd state=restarted use=service

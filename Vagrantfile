@@ -26,6 +26,7 @@ Vagrant.configure("2") do |config|
           ansible.inventory_path = "ansible/hosts"
           ansible.host_key_checking = "false"
           ansible.limit = "all"
+          ansible.verbose = "true"
         end
       end
     end
