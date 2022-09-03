@@ -42,7 +42,7 @@
 
     - name: NGINX | Audit config changes
       blockinfile:
-        path: /etc/rsyslog.conf
+        path: /etc/audit/rules.d/audit.rules 
         block: |
           -w /etc/nginx/nginx.conf -p wa -k nginx_conf
           -w /etc/nginx/default.d/ -p wa -k nginx_conf
@@ -73,13 +73,6 @@
       tags:
         - auditd-conf
     
-
-#    - name: with_flattened -> loop
-#      ansible.builtin.debug:
-#        msg: "{{ item.value }}" 
-#      loop: "{{ lookup('dict', nginx_conf) }}"
-#      tags: 
-#        - debug
 
   handlers:
     - name: restart nginx

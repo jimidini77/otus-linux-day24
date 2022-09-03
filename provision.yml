@@ -42,7 +42,7 @@
 
     - name: NGINX | Audit config changes
       blockinfile:
-        path: /etc/rsyslog.conf
+        path: /etc/audit/rules.d/audit.rules 
         block: |
           -w /etc/nginx/nginx.conf -p wa -k nginx_conf
           -w /etc/nginx/default.d/ -p wa -k nginx_conf
