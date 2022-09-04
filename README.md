@@ -235,6 +235,14 @@ node=web type=SYSCALL msg=audit(1662222586.188:2864): arch=c000003e syscall=188 
       tags:
         - auditd-conf
 ```
+Например при смене атрибута файла `/etc/nginx/nginx.conf` на сервере web, в журнале audit сервера log появляются записи:
+```
+[root@log vagrant]# tail /var/log/audit/audit.log
+node=web type=SYSCALL msg=audit(1662284765.683:1623): arch=c000003e syscall=268 success=yes exit=0 a0=ffffffffffffff9c a1=1c370f0 a2=1ed a3=7ffec2a76030 items=1 ppid=5068 pid=5083 auid=1000 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=6 comm="chmod" exe="/usr/bin/chmod" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="nginx_conf"
+node=web type=CWD msg=audit(1662284765.683:1623):  cwd="/home/vagrant"
+node=web type=PATH msg=audit(1662284765.683:1623): item=0 name="/etc/nginx/nginx.conf" inode=33565397 dev=08:01 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:httpd_config_t:s0 objtype=NORMAL cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
+node=web type=PROCTITLE msg=audit(1662284765.683:1623): proctitle=63686D6F64002B78002F6574632F6E67696E782F6E67696E782E636F6E66
+```
 
 ## Ansible
 Структура проекта с использованием Ansible:
@@ -269,8 +277,8 @@ log ansible_host=192.168.56.15 ansible_port=22 ansible_private_key_file=.vagrant
 
 # **Результаты**
 
-Выполнено развёртывание и настройка nginx на стенде с использованием Ansible и ролей.
+Выполнено развёртывание стенда с настройкой пересылки и сбора событий на log-сервере.
 Полученный в ходе работы `Vagrantfile` с настроенным Ansible provisioner помещен в публичный репозиторий.
-При поднятии ВМ выполняется установка и настройка Nginx и Rsyslog с использованием Ansible
+При поднятии ВМ выполняется установка и настройка Nginx и Rsyslog с использованием Ansible.
 
 - **GitHub** - https://github.com/jimidini77/otus-linux-day24
